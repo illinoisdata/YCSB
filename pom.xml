@@ -121,6 +121,7 @@ LICENSE file.
     <module>cloudspanner</module>
     <module>couchbase</module>
     <module>couchbase2</module>
+    <module>cruzdb</module>
     <module>dynamodb</module>
     <module>elasticsearch</module>
     <module>elasticsearch5</module>

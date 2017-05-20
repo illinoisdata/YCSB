@@ -168,7 +168,6 @@ if $DISTRIBUTION; then
 else
   # Check for some basic libraries to see if the source has been built.
   for f in "$YCSB_HOME"/"$BINDING_DIR"/target/*.jar ; do
-
     # Call mvn to build source checkout.
     if [ ! -e "$f" ] ; then
       if [ "$BINDING_NAME" = "basic" ] ; then
@@ -200,7 +199,6 @@ else
     CLASSPATH="$CLASSPATH$CLASSPATH_CONF"
   fi
 
-
   # Database libraries
   for f in "$YCSB_HOME"/"$BINDING_DIR"/target/*.jar ; do
     if [ -r "$f" ] ; then
@@ -214,6 +212,13 @@ else
       CLASSPATH="$CLASSPATH:$f"
     fi
   done
+
+  # Core dependencies from Maven
+  CLASSPATH_FILE=$(mktemp)
+  mvn -pl com.yahoo.ycsb:core dependency:build-classpath -Dmdep.outputFile=$CLASSPATH_FILE
+  CLASSPATH_MVN=$(cat $CLASSPATH_FILE)
+  echo XXX $CLASSPATH_MVN
+  CLASSPATH=$CLASSPATH:$CLASSPATH_MVN
 fi
 
 # Couchbase deprecation message
