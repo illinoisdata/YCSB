@@ -19,6 +19,7 @@ package com.yahoo.ycsb.db.cruzdb;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.text.SimpleDateFormat;
 
 import com.yahoo.ycsb.*;
 import static com.yahoo.ycsb.db.cruzdb.CruzUtils.serializeTable;
@@ -35,6 +36,9 @@ public class CruzDBClient extends DB {
   private static Log log;
   private static com.cruzdb.DB db;
   private static final AtomicInteger INIT_COUNT = new AtomicInteger(0);
+  private static Thread metricLoggingThread = null;
+  private static volatile boolean stop = false;
+  private static int statsFreqSec;
 
   @Override
   public void init() throws DBException {
@@ -63,6 +67,8 @@ public class CruzDBClient extends DB {
       // fold in properties from command line
       props.putAll(getProperties());
 
+      statsFreqSec = Integer.parseInt(props.getProperty("cruzdb.stats.sec", "0"));
+
       // open/create the log and database
       try {
         String logName = props.getProperty("cruzdb.logName");
@@ -84,12 +90,44 @@ public class CruzDBClient extends DB {
       } catch (Exception e) {
         throw new DBException(e);
       }
+
+      if (statsFreqSec > 0) {
+        metricLoggingThread = new Thread() {
+          @Override
+          public void run() {
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+            try {
+              while (!stop) {
+                Thread.sleep(statsFreqSec * 1000);
+                System.out.println(
+                    format.format(new Date()) + " cruzdb " + db.getStats());
+              }
+            } catch (com.cruzdb.LogException e) {
+              System.err.println("log exception: " + e);
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+              return;
+            }
+          }
+        };
+        metricLoggingThread.start();
+      }
     }
   }
 
   @Override
   public void cleanup() throws DBException {
     if (INIT_COUNT.decrementAndGet() == 0) {
+      stop = true;
+      if (metricLoggingThread != null) {
+        metricLoggingThread.interrupt();
+        try {
+          metricLoggingThread.join();
+        } catch (InterruptedException e) {
+          System.err.println("joining stats thread: " + e);
+        }
+        metricLoggingThread = null;
+      }
       if (db != null) {
         db.dispose();
         log.dispose();
