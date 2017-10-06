@@ -92,7 +92,7 @@ public class CruzDBClientTest {
 
     for (int rowId = 0; rowId < numRows; rowId++) {
       final String key = rowKey(rowId);
-      final HashMap<String, ByteIterator> row =
+      final Map<String, ByteIterator> row =
         StringByteIterator.getByteIteratorMap(createRow(rowId));
       c.insert(table, key, row);
     }

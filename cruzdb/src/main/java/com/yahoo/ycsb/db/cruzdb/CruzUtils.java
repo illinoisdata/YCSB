@@ -154,7 +154,7 @@ final class CruzUtils {
    * @param resultHashMap The HashMap to return as result.
    */
   static void createResultHashMap(Set<String> fields, byte[] responseFieldsAndValues,
-                                  HashMap<String, ByteIterator>resultHashMap) {
+                                  Map<String, ByteIterator>resultHashMap) {
     // Deserialize the stored response table.
     HashMap<String, ByteIterator> deserializedTable = new HashMap<>();
     deserializeTable(responseFieldsAndValues, deserializedTable);

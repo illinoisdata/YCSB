@@ -100,10 +100,8 @@ public class CruzDBClient extends DB {
               while (!stop) {
                 Thread.sleep(statsFreqSec * 1000);
                 System.out.println(
-                    format.format(new Date()) + " cruzdb " + db.getStats());
+                    format.format(new Date()) + " cruzdb <not implemented>");
               }
-            } catch (com.cruzdb.LogException e) {
-              System.err.println("log exception: " + e);
             } catch (InterruptedException e) {
               Thread.currentThread().interrupt();
               return;
@@ -138,7 +136,7 @@ public class CruzDBClient extends DB {
 
   @Override
   public Status read(String table, String key, Set<String> fields,
-      HashMap<String, ByteIterator> result) {
+      Map<String, ByteIterator> result) {
     final String compositeKey = table + "_" + key;
     try {
       final byte[] values = db.get(compositeKey.getBytes());
@@ -179,7 +177,7 @@ public class CruzDBClient extends DB {
 
   @Override
   public Status insert(String table, String key,
-      HashMap<String, ByteIterator> values) {
+      Map<String, ByteIterator> values) {
     final String compositeKey = table + "_" + key;
     final byte[] valueBlob = serializeTable(values);
     try {
@@ -193,7 +191,7 @@ public class CruzDBClient extends DB {
 
   @Override
   public Status update(String table, String key,
-      HashMap<String, ByteIterator> values) {
+      Map<String, ByteIterator> values) {
     final String compositeKey = table + "_" + key;
     final Transaction txn = db.newTransaction();
     try {
