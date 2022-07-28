@@ -24,9 +24,14 @@ import java.text.SimpleDateFormat;
 import com.yahoo.ycsb.*;
 import static com.yahoo.ycsb.db.cruzdb.CruzUtils.serializeTable;
 import static com.yahoo.ycsb.db.cruzdb.CruzUtils.createResultHashMap;
-import com.cruzdb.Log;
-import com.cruzdb.CruzIterator;
-import com.cruzdb.Transaction;
+//import com.cruzdb.Log;
+//import com.cruzdb.CruzIterator;
+//import com.cruzdb.Transaction;
+
+import org.cruzdb.CruzDB;
+import org.cruzdb.CruzIterator;
+import org.cruzdb.Transaction;
+import org.cruzdb.zlog.Log;
 
 /**
  * CruzDB client for the YCSB framework.
@@ -34,7 +39,8 @@ import com.cruzdb.Transaction;
 public class CruzDBClient extends DB {
 
   private static Log log;
-  private static com.cruzdb.DB db;
+    //  private static com.cruzdb.DB db;
+  private static CruzDB db;
   private static final AtomicInteger INIT_COUNT = new AtomicInteger(0);
   private static Thread metricLoggingThread = null;
   private static volatile boolean stop = false;
@@ -80,12 +86,22 @@ public class CruzDBClient extends DB {
           int seqPort = Integer.parseInt(props.getProperty("cruzdb.seqPort"));
           System.out.println("Using Ceph pool: " + cephPool);
           System.out.println("Using sequencer: " + seqHost + ":" + seqPort);
-          log = Log.openCeph(cephPool, seqHost, seqPort, logName);
-          db = com.cruzdb.DB.open(log, true);
+//          log = Log.openCeph(cephPool, seqHost, seqPort, logName);
+//          db = com.cruzdb.DB.open(log, true);
+
+          log = Log.open("ceph", null, logName);
+          db = CruzDB.open(log, true);
         } else {
           System.out.println("Using LMDB directory: " + lmdbDir);
-          log = Log.openLMDB(lmdbDir, logName);
-          db = com.cruzdb.DB.open(log, true);
+//          log = Log.openLMDB(lmdbDir, logName);
+//          db = com.cruzdb.DB.open(log, true);
+          HashMap<String, String> opts = new HashMap<String, String>();
+          opts.put("path", lmdbDir);
+          System.out.println("start open");
+          log = Log.open("lmdb", opts, logName);
+          System.out.println("lmdb log open success");
+          db = CruzDB.open(log, true);
+          System.out.println("lmdb cruzdb open success");
         }
       } catch (Exception e) {
         throw new DBException(e);
@@ -198,11 +214,12 @@ public class CruzDBClient extends DB {
       final byte[] keyBytes = compositeKey.getBytes();
       final byte[] curValues = txn.get(keyBytes);
       if (curValues == null) {
-        try {
-          txn.abort();
-        } catch (Exception e) {
-          System.err.println(e.toString());
-        }
+//        try {
+//          txn.abort();
+//        } catch (Exception e) {
+//          System.err.println(e.toString());
+//        }
+        System.err.println("failed to abort");
         return Status.NOT_FOUND;
       }
       final HashMap<String, ByteIterator> result = new HashMap<>();

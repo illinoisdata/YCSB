@@ -85,25 +85,31 @@ public class CruzDBClientTest {
     final String logName = "cruzdb.ycsb.test." + System.currentTimeMillis();
     props.setProperty("cruzdb.logName", logName);
 
-    // temp client used to pre-populate db
-    CruzDBClient c = new CruzDBClient();
-    c.setProperties(props);
-    c.init();
+   //	 // temp client used to pre-populate db
+   //	 CruzDBClient c = new CruzDBClient();
+   //	 c.setProperties(props);
+   //	 c.init();
 
-    for (int rowId = 0; rowId < numRows; rowId++) {
-      final String key = rowKey(rowId);
-      final Map<String, ByteIterator> row =
-        StringByteIterator.getByteIteratorMap(createRow(rowId));
-      c.insert(table, key, row);
-    }
+   //	 for (int rowId = 0; rowId < numRows; rowId++) {
+   //	   final String key = rowKey(rowId);
+   //	   final Map<String, ByteIterator> row =
+   //	     StringByteIterator.getByteIteratorMap(createRow(rowId));
+   //	   c.insert(table, key, row);
+   //	 }
 
-    // make sure a new low-level db connection is re-built
-    c.cleanup();
+   //	 // make sure a new low-level db connection is re-built
+   //	 c.cleanup();
 
     // client instance used by the test
     client = new CruzDBClient();
     client.setProperties(props);
     client.init();
+    for (int rowId = 0; rowId < numRows; rowId++) {
+      final String key = rowKey(rowId);
+      final Map<String, ByteIterator> row =
+        StringByteIterator.getByteIteratorMap(createRow(rowId));
+      client.insert(table, key, row);
+    }
   }
 
   @After

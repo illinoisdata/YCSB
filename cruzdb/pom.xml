@@ -37,6 +37,11 @@ LICENSE file.
       <version>0.0.1</version>
     </dependency>
     <dependency>
+      <groupId>com.cruzdb</groupId>
+      <artifactId>zlog</artifactId>
+      <version>0.0.1</version>
+    </dependency>
+    <dependency>
       <groupId>com.yahoo.ycsb</groupId>
       <artifactId>core</artifactId>
       <version>${project.version}</version>
