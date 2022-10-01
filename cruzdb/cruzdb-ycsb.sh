@@ -26,7 +26,7 @@ zlog() {
         cd ${ZLOG_JAVA_BINDINGS}
         cmake .
         make
-        make install
+        make install # Make sure libzlogjni.so installed in /usr/local/lib
         mv zlog.jar zlog-0.0.1.jar
         cp -R zlog-0.0.1.jar ${YCSB_CRUZDB}
         echo "------------------------------"
@@ -47,7 +47,7 @@ cruzdb() {
         cp -R ${CRUZDB_DIR}/src/include/cruzdb/options.h /usr/local/include/cruzdb/
         cmake -DZLOG_JAVA=zlog-jar/zlog-0.0.1.jar .
         make
-        make install
+        make install # Make sure libcruzdbjni.so installed in /usr/local/lib
         mv cruzdb.jar cruzdb-0.0.1.jar
         cp -R cruzdb-0.0.1.jar ${YCSB_CRUZDB}
         echo "------------------------------"
