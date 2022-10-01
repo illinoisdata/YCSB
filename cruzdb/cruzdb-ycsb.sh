@@ -36,6 +36,7 @@ zlog() {
 
 cruzdb() {
         cd ${CRUZDB_DIR}
+        ./install-deps.sh
         cmake -DZLOG_INSTALL_DIR=/../ .
         make
         make install
