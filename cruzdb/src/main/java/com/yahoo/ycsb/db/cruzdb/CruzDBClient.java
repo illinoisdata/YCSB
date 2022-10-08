@@ -16,22 +16,31 @@
  */
 package com.yahoo.ycsb.db.cruzdb;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.text.SimpleDateFormat;
-
-import com.yahoo.ycsb.*;
-import static com.yahoo.ycsb.db.cruzdb.CruzUtils.serializeTable;
 import static com.yahoo.ycsb.db.cruzdb.CruzUtils.createResultHashMap;
 //import com.cruzdb.Log;
 //import com.cruzdb.CruzIterator;
 //import com.cruzdb.Transaction;
+import static com.yahoo.ycsb.db.cruzdb.CruzUtils.serializeTable;
+
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.cruzdb.CruzDB;
 import org.cruzdb.CruzIterator;
-import org.cruzdb.Transaction;
+//import org.cruzdb.Transaction;
 import org.cruzdb.zlog.Log;
+
+import com.yahoo.ycsb.ByteIterator;
+import com.yahoo.ycsb.DB;
+import com.yahoo.ycsb.DBException;
+import com.yahoo.ycsb.Status;
 
 /**
  * CruzDB client for the YCSB framework.
@@ -39,7 +48,7 @@ import org.cruzdb.zlog.Log;
 public class CruzDBClient extends DB {
 
   private static Log log;
-    //  private static com.cruzdb.DB db;
+  // private static com.cruzdb.DB db;
   private static CruzDB db;
   private static final AtomicInteger INIT_COUNT = new AtomicInteger(0);
   private static Thread metricLoggingThread = null;
@@ -60,8 +69,7 @@ public class CruzDBClient extends DB {
 
       // load default properties
       try {
-        InputStream propFile = CruzDBClient.class.
-            getClassLoader().getResourceAsStream("cruzdb.properties");
+        InputStream propFile = CruzDBClient.class.getClassLoader().getResourceAsStream("cruzdb.properties");
         Properties defaultProps = new Properties();
         defaultProps.load(propFile);
         props.putAll(defaultProps);
@@ -86,15 +94,15 @@ public class CruzDBClient extends DB {
           int seqPort = Integer.parseInt(props.getProperty("cruzdb.seqPort"));
           System.out.println("Using Ceph pool: " + cephPool);
           System.out.println("Using sequencer: " + seqHost + ":" + seqPort);
-//          log = Log.openCeph(cephPool, seqHost, seqPort, logName);
-//          db = com.cruzdb.DB.open(log, true);
+          // log = Log.openCeph(cephPool, seqHost, seqPort, logName);
+          // db = com.cruzdb.DB.open(log, true);
 
           log = Log.open("ceph", null, logName);
           db = CruzDB.open(log, true);
         } else {
           System.out.println("Using LMDB directory: " + lmdbDir);
-//          log = Log.openLMDB(lmdbDir, logName);
-//          db = com.cruzdb.DB.open(log, true);
+          // log = Log.openLMDB(lmdbDir, logName);
+          // db = com.cruzdb.DB.open(log, true);
           HashMap<String, String> opts = new HashMap<String, String>();
           opts.put("path", lmdbDir);
           System.out.println("start open");
@@ -106,7 +114,7 @@ public class CruzDBClient extends DB {
       } catch (Exception e) {
         throw new DBException(e);
       }
-
+      System.err.println("VALUE:" + statsFreqSec);
       if (statsFreqSec > 0) {
         metricLoggingThread = new Thread() {
           @Override
@@ -196,6 +204,7 @@ public class CruzDBClient extends DB {
       Map<String, ByteIterator> values) {
     final String compositeKey = table + "_" + key;
     final byte[] valueBlob = serializeTable(values);
+    System.out.println("Added on Oct 8: insert inside cruzdb ");
     try {
       db.put(compositeKey.getBytes(), valueBlob);
     } catch (Exception e) {
@@ -209,29 +218,33 @@ public class CruzDBClient extends DB {
   public Status update(String table, String key,
       Map<String, ByteIterator> values) {
     final String compositeKey = table + "_" + key;
-    final Transaction txn = db.newTransaction();
+    System.err.println("UPDATE TEST!!!! ");
+    // final Transaction txn = db.newTransaction();
     try {
       final byte[] keyBytes = compositeKey.getBytes();
-      final byte[] curValues = txn.get(keyBytes);
+      // final byte[] curValues = txn.get(keyBytes);
+      final byte[] curValues = db.get(keyBytes);
       if (curValues == null) {
-//        try {
-//          txn.abort();
-//        } catch (Exception e) {
-//          System.err.println(e.toString());
-//        }
-        System.err.println("failed to abort");
-        return Status.NOT_FOUND;
+        // try {
+        // txn.abort();
+        // } catch (Exception e) {
+        // System.err.println(e.toString());
+        // }
+        // System.err.println("failed to abort");
+        // return Status.NOT_FOUND;
+        return insert(table, key, values);
       }
       final HashMap<String, ByteIterator> result = new HashMap<>();
       createResultHashMap(null, curValues, result);
       result.putAll(values);
-      txn.put(keyBytes, serializeTable(result));
-      txn.commit();
+      // db.put(keyBytes, serializeTable(result));
+      // txn.put(keyBytes, serializeTable(result));
+      // txn.commit();
     } catch (Exception e) {
       System.err.println(e.toString());
       return Status.ERROR;
     } finally {
-      txn.dispose();
+      // txn.dispose();
     }
     return Status.OK;
   }

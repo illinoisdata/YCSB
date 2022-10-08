@@ -17,27 +17,35 @@
 
 package com.yahoo.ycsb;
 
-import com.yahoo.ycsb.measurements.Measurements;
-import com.yahoo.ycsb.measurements.exporter.MeasurementsExporter;
-import com.yahoo.ycsb.measurements.exporter.TextMeasurementsExporter;
-import org.apache.htrace.core.HTraceConfiguration;
-import org.apache.htrace.core.TraceScope;
-import org.apache.htrace.core.Tracer;
-
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
+import org.apache.htrace.core.HTraceConfiguration;
+import org.apache.htrace.core.TraceScope;
+import org.apache.htrace.core.Tracer;
+
+import com.yahoo.ycsb.measurements.Measurements;
+import com.yahoo.ycsb.measurements.exporter.MeasurementsExporter;
+import com.yahoo.ycsb.measurements.exporter.TextMeasurementsExporter;
+
 /**
- * A thread to periodically show the status of the experiment to reassure you that progress is being made.
+ * A thread to periodically show the status of the experiment to reassure you
+ * that progress is being made.
  */
 class StatusThread extends Thread {
   // Counts down each of the clients completing
@@ -71,32 +79,36 @@ class StatusThread extends Thread {
   /**
    * Creates a new StatusThread without JVM stat tracking.
    *
-   * @param completeLatch         The latch that each client thread will {@link CountDownLatch#countDown()}
+   * @param completeLatch         The latch that each client thread will
+   *                              {@link CountDownLatch#countDown()}
    *                              as they complete.
    * @param clients               The clients to collect metrics from.
    * @param label                 The label for the status.
-   * @param standardstatus        If true the status is printed to stdout in addition to stderr.
+   * @param standardstatus        If true the status is printed to stdout in
+   *                              addition to stderr.
    * @param statusIntervalSeconds The number of seconds between status updates.
    */
   public StatusThread(CountDownLatch completeLatch, List<ClientThread> clients,
-                      String label, boolean standardstatus, int statusIntervalSeconds) {
+      String label, boolean standardstatus, int statusIntervalSeconds) {
     this(completeLatch, clients, label, standardstatus, statusIntervalSeconds, false);
   }
 
   /**
    * Creates a new StatusThread.
    *
-   * @param completeLatch         The latch that each client thread will {@link CountDownLatch#countDown()}
+   * @param completeLatch         The latch that each client thread will
+   *                              {@link CountDownLatch#countDown()}
    *                              as they complete.
    * @param clients               The clients to collect metrics from.
    * @param label                 The label for the status.
-   * @param standardstatus        If true the status is printed to stdout in addition to stderr.
+   * @param standardstatus        If true the status is printed to stdout in
+   *                              addition to stderr.
    * @param statusIntervalSeconds The number of seconds between status updates.
    * @param trackJVMStats         Whether or not to track JVM stats.
    */
   public StatusThread(CountDownLatch completeLatch, List<ClientThread> clients,
-                      String label, boolean standardstatus, int statusIntervalSeconds,
-                      boolean trackJVMStats) {
+      String label, boolean standardstatus, int statusIntervalSeconds,
+      boolean trackJVMStats) {
     this.completeLatch = completeLatch;
     this.clients = clients;
     this.label = label;
@@ -132,8 +144,7 @@ class StatusThread extends Thread {
 
       startIntervalMs = nowMs;
       deadline += sleeptimeNs;
-    }
-    while (!alldone);
+    } while (!alldone);
 
     if (trackJVMStats) {
       measureJVM();
@@ -152,7 +163,7 @@ class StatusThread extends Thread {
    * @return The current operation count.
    */
   private long computeStats(final long startTimeMs, long startIntervalMs, long endIntervalMs,
-                            long lastTotalOps) {
+      long lastTotalOps) {
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
 
     long totalops = 0;
@@ -164,13 +175,11 @@ class StatusThread extends Thread {
       todoops += t.getOpsTodo();
     }
 
-
     long interval = endIntervalMs - startTimeMs;
     double throughput = 1000.0 * (((double) totalops) / (double) interval);
     double curthroughput = 1000.0 * (((double) (totalops - lastTotalOps)) /
         ((double) (endIntervalMs - startIntervalMs)));
     long estremaining = (long) Math.ceil(todoops / throughput);
-
 
     DecimalFormat d = new DecimalFormat("#.##");
     String labelString = this.label + format.format(new Date());
@@ -235,7 +244,7 @@ class StatusThread extends Thread {
     measurements.measure("THREAD_COUNT", threads);
 
     // TODO - once measurements allow for other number types, switch to using
-    // the raw bytes. Otherwise we can track in MB to avoid negative values 
+    // the raw bytes. Otherwise we can track in MB to avoid negative values
     // when faced with huge heaps.
     final int usedMem = Utils.getUsedMemoryMegaBytes();
     if (usedMem < minUsedMem) {
@@ -384,12 +393,13 @@ class ClientThread implements Runnable {
    * @param dotransactions       true to do transactions, false to insert data
    * @param workload             the workload to use
    * @param props                the properties defining the experiment
-   * @param opcount              the number of operations (transactions or inserts) to do
+   * @param opcount              the number of operations (transactions or
+   *                             inserts) to do
    * @param targetperthreadperms target number of operations per thread per ms
    * @param completeLatch        The latch tracking the completion of all clients.
    */
   public ClientThread(DB db, boolean dotransactions, Workload workload, Properties props, int opcount,
-                      double targetperthreadperms, CountDownLatch completeLatch) {
+      double targetperthreadperms, CountDownLatch completeLatch) {
     this.db = db;
     this.dotransactions = dotransactions;
     this.workload = workload;
@@ -408,11 +418,11 @@ class ClientThread implements Runnable {
   public void setThreadId(final int threadId) {
     threadid = threadId;
   }
-  
+
   public void setThreadCount(final int threadCount) {
     threadcount = threadCount;
   }
-  
+
   public int getOpsDone() {
     return opsdone;
   }
@@ -435,11 +445,14 @@ class ClientThread implements Runnable {
       return;
     }
 
-    //NOTE: Switching to using nanoTime and parkNanos for time management here such that the measurements
+    // NOTE: Switching to using nanoTime and parkNanos for time management here such
+    // that the measurements
     // and the client thread have the same view on time.
 
-    //spread the thread operations out so they don't all hit the DB at the same time
-    // GH issue 4 - throws exception if _target>1 because random.nextInt argument must be >0
+    // spread the thread operations out so they don't all hit the DB at the same
+    // time
+    // GH issue 4 - throws exception if _target>1 because random.nextInt argument
+    // must be >0
     // and the sleep() doesn't make sense for granularities < 1 ms anyway
     if ((targetOpsPerMs > 0) && (targetOpsPerMs <= 1.0)) {
       long randomMinorDelay = Utils.random().nextInt((int) targetOpsTickNs);
@@ -463,6 +476,7 @@ class ClientThread implements Runnable {
         long startTimeNanos = System.nanoTime();
 
         while (((opcount == 0) || (opsdone < opcount)) && !workload.isStopRequested()) {
+          System.out.println("inserted an entry!");
 
           if (!workload.doInsert(db, workloadstate)) {
             break;
@@ -499,7 +513,7 @@ class ClientThread implements Runnable {
   }
 
   private void throttleNanos(long startTimeNanos) {
-    //throttle the operations
+    // throttle the operations
     if (targetOpsPerMs > 0) {
       // delay until next tick
       long deadline = startTimeNanos + opsdone * targetOpsTickNs;
@@ -522,7 +536,7 @@ class ClientThread implements Runnable {
  */
 public final class Client {
   private Client() {
-    //not used
+    // not used
   }
 
   public static final String DEFAULT_RECORD_COUNT = "0";
@@ -566,8 +580,10 @@ public final class Client {
 
   /**
    * Indicates how many inserts to do if less than recordcount.
-   * Useful for partitioning the load among multiple servers if the client is the bottleneck.
-   * Additionally workloads should support the "insertstart" property which tells them which record to start at.
+   * Useful for partitioning the load among multiple servers if the client is the
+   * bottleneck.
+   * Additionally workloads should support the "insertstart" property which tells
+   * them which record to start at.
    */
   public static final String INSERT_COUNT_PROPERTY = "insertcount";
 
@@ -651,12 +667,12 @@ public final class Client {
     return true;
   }
 
-
   /**
    * Exports the measurements to either sysout or a file using the exporter
    * loaded from conf.
    *
-   * @throws IOException Either failed to write to output stream or failed to close it.
+   * @throws IOException Either failed to write to output stream or failed to
+   *                     close it.
    */
   private static void exportMeasurements(Properties props, int opcount, long runtime)
       throws IOException {
@@ -729,12 +745,12 @@ public final class Client {
 
     long maxExecutionTime = Integer.parseInt(props.getProperty(MAX_EXECUTION_TIME, "0"));
 
-    //get number of threads, target and db
+    // get number of threads, target and db
     int threadcount = Integer.parseInt(props.getProperty(THREAD_COUNT_PROPERTY, "1"));
     String dbname = props.getProperty(DB_PROPERTY, "com.yahoo.ycsb.BasicDB");
     int target = Integer.parseInt(props.getProperty(TARGET_PROPERTY, "0"));
 
-    //compute the target throughput
+    // compute the target throughput
     double targetperthreadperms = -1;
     if (target > 0) {
       double targetperthread = ((double) target) / ((double) threadcount);
@@ -818,7 +834,8 @@ public final class Client {
         if (status) {
           // wake up status thread if it's asleep
           statusthread.interrupt();
-          // at this point we assume all the monitored threads are already gone as per above join loop.
+          // at this point we assume all the monitored threads are already gone as per
+          // above join loop.
           try {
             statusthread.join();
           } catch (InterruptedException ignored) {
@@ -848,8 +865,8 @@ public final class Client {
   }
 
   private static List<ClientThread> initDb(String dbname, Properties props, int threadcount,
-                                           double targetperthreadperms, Workload workload, Tracer tracer,
-                                           CountDownLatch completeLatch) {
+      double targetperthreadperms, Workload workload, Tracer tracer,
+      CountDownLatch completeLatch) {
     boolean initFailed = false;
     boolean dotransactions = Boolean.valueOf(props.getProperty(DO_TRANSACTIONS_PROPERTY, String.valueOf(true)));
 
@@ -878,7 +895,8 @@ public final class Client {
 
         int threadopcount = opcount / threadcount;
 
-        // ensure correct number of operations, in case opcount is not a multiple of threadcount
+        // ensure correct number of operations, in case opcount is not a multiple of
+        // threadcount
         if (threadid < opcount % threadcount) {
           ++threadopcount;
         }
@@ -928,9 +946,10 @@ public final class Client {
   }
 
   private static Thread setupWarningThread() {
-    //show a warning message that creating the workload is taking a while
-    //but only do so if it is taking longer than 2 seconds
-    //(showing the message right away if the setup wasn't taking very long was confusing people)
+    // show a warning message that creating the workload is taking a while
+    // but only do so if it is taking longer than 2 seconds
+    // (showing the message right away if the setup wasn't taking very long was
+    // confusing people)
     return new Thread() {
       @Override
       public void run() {
@@ -976,10 +995,8 @@ public final class Client {
     for (String arg : args) {
       System.err.print(" " + arg);
     }
-
     Properties fileprops = new Properties();
     int argindex = 0;
-
     if (args.length == 0) {
       usageMessage();
       System.out.println("At least one argument specifying a workload is required.");
@@ -1053,7 +1070,8 @@ public final class Client {
           System.exit(0);
         }
 
-        //Issue #5 - remove call to stringPropertyNames to make compilable under Java 1.5
+        // Issue #5 - remove call to stringPropertyNames to make compilable under Java
+        // 1.5
         for (Enumeration e = myfileprops.propertyNames(); e.hasMoreElements();) {
           String prop = (String) e.nextElement();
 
@@ -1101,9 +1119,10 @@ public final class Client {
       System.exit(0);
     }
 
-    //overwrite file properties with properties from the command line
+    // overwrite file properties with properties from the command line
 
-    //Issue #5 - remove call to stringPropertyNames to make compilable under Java 1.5
+    // Issue #5 - remove call to stringPropertyNames to make compilable under Java
+    // 1.5
     for (Enumeration e = props.propertyNames(); e.hasMoreElements();) {
       String prop = (String) e.nextElement();
 
