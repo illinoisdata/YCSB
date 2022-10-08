@@ -105,6 +105,7 @@ public class CruzDBClient extends DB {
           // db = com.cruzdb.DB.open(log, true);
           HashMap<String, String> opts = new HashMap<String, String>();
           opts.put("path", lmdbDir);
+          //opts.put("mapsize", "1e6");
           System.out.println("start open");
           log = Log.open("lmdb", opts, logName);
           System.out.println("lmdb log open success");
@@ -204,7 +205,7 @@ public class CruzDBClient extends DB {
       Map<String, ByteIterator> values) {
     final String compositeKey = table + "_" + key;
     final byte[] valueBlob = serializeTable(values);
-    System.out.println("Added on Oct 8: insert inside cruzdb ");
+    //System.out.println("Added on Oct 8: insert inside cruzdb ");
     try {
       db.put(compositeKey.getBytes(), valueBlob);
     } catch (Exception e) {

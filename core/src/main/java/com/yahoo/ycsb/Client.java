@@ -459,34 +459,69 @@ class ClientThread implements Runnable {
       sleepUntil(System.nanoTime() + randomMinorDelay);
     }
     try {
-      if (dotransactions) {
-        long startTimeNanos = System.nanoTime();
+      // Perform insert (or load) first
+      long startTimeNanos = System.nanoTime();
 
-        while (((opcount == 0) || (opsdone < opcount)) && !workload.isStopRequested()) {
-
-          if (!workload.doTransaction(db, workloadstate)) {
-            break;
-          }
-
-          opsdone++;
-
-          throttleNanos(startTimeNanos);
+      while (((opcount == 0) || (opsdone < opcount)) && !workload.isStopRequested()) {
+        if (opsdone % 1000 == 0) {
+          System.out.println("inserted entries: " + opsdone);
         }
-      } else {
-        long startTimeNanos = System.nanoTime();
 
-        while (((opcount == 0) || (opsdone < opcount)) && !workload.isStopRequested()) {
-          System.out.println("inserted an entry!");
-
-          if (!workload.doInsert(db, workloadstate)) {
-            break;
-          }
-
-          opsdone++;
-
-          throttleNanos(startTimeNanos);
+        if (!workload.doInsert(db, workloadstate)) {
+          break;
         }
+
+        opsdone++;
+
+        throttleNanos(startTimeNanos);
       }
+
+      // Perform run now
+      long startTimeNanosRun = System.nanoTime();
+      opsdone = 0;
+      opcount = 10;
+
+      while (((opcount == 0) || (opsdone < opcount)) && !workload.isStopRequested()) {
+        System.out.println("ran an entry!");
+
+        if (!workload.doTransaction(db, workloadstate)) {
+          break;
+        }
+
+        opsdone++;
+
+        throttleNanos(startTimeNanosRun);
+      }
+
+      // Will be commented out
+      //if (dotransactions) {
+      //  long startTimeNanos = System.nanoTime();
+
+      //  while (((opcount == 0) || (opsdone < opcount)) && !workload.isStopRequested()) {
+
+      //    if (!workload.doTransaction(db, workloadstate)) {
+      //      break;
+      //    }
+
+      //    opsdone++;
+
+      //    throttleNanos(startTimeNanos);
+      //  }
+      //} else {
+      //  long startTimeNanos = System.nanoTime();
+
+      //  while (((opcount == 0) || (opsdone < opcount)) && !workload.isStopRequested()) {
+      //    System.out.println("inserted an entry!");
+
+      //    if (!workload.doInsert(db, workloadstate)) {
+      //      break;
+      //    }
+
+      //    opsdone++;
+
+      //    throttleNanos(startTimeNanos);
+      //  }
+      //}
     } catch (Exception e) {
       e.printStackTrace();
       e.printStackTrace(System.out);
