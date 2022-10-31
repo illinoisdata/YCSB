@@ -21,12 +21,12 @@ zlog() {
         ./install-deps.sh
         cmake .
         make
-        make install
+        sudo make install
 
         cd ${ZLOG_JAVA_BINDINGS}
         cmake .
         make
-        make install # Make sure libzlogjni.so installed in /usr/local/lib
+        sudo make install # Make sure libzlogjni.so installed in /usr/local/lib
         mv zlog.jar zlog-0.0.1.jar
         cp -R zlog-0.0.1.jar ${YCSB_CRUZDB}
         echo "------------------------------"
@@ -39,15 +39,15 @@ cruzdb() {
         ./install-deps.sh
         cmake -DZLOG_INSTALL_DIR=/../ .
         make
-        make install
+        sudo make install
 
         cd ${CRUZDB_JAVA_BINDINGS}
         mkdir zlog-jar
         cp -R ${ZLOG_JAVA_BINDINGS}/zlog-0.0.1.jar ./zlog-jar
-        cp -R ${CRUZDB_DIR}/src/include/cruzdb/options.h /usr/local/include/cruzdb/
+        sudo cp -R ${CRUZDB_DIR}/src/include/cruzdb/options.h /usr/local/include/cruzdb/
         cmake -DZLOG_JAVA=zlog-jar/zlog-0.0.1.jar .
         make
-        make install # Make sure libcruzdbjni.so installed in /usr/local/lib
+        sudo make install # Make sure libcruzdbjni.so installed in /usr/local/lib
         mv cruzdb.jar cruzdb-0.0.1.jar
         cp -R cruzdb-0.0.1.jar ${YCSB_CRUZDB}
         echo "------------------------------"
@@ -63,7 +63,7 @@ ycsb() {
         cd ${YCSB_DIR}
         export LD_LIBRARY_PATH=/usr/local/lib
         ZLOG_LMDB_BE_SIZE=GBS
-        mvn -pl com.yahoo.ycsb:cruzdb-binding -am clean package
+        mvn -pl com.yahoo.ycsb:cruzdb-binding -am clean package -DskipTests
 }
 
 install
