@@ -105,6 +105,14 @@ public class CruzDBClient extends DB {
           // db = com.cruzdb.DB.open(log, true);
           HashMap<String, String> opts = new HashMap<String, String>();
           opts.put("path", lmdbDir);
+          boolean dotransactions = Boolean.valueOf(props.getProperty("dotransactions", String.valueOf(true)));
+          if (dotransactions) {
+            opts.put("open", "true");
+            System.out.println("INFO: open log");
+          } else {
+            opts.put("create", "true");
+            System.out.println("INFO: create log");
+          }
           //opts.put("mapsize", "1e6");
           System.out.println("start open");
           log = Log.open("lmdb", opts, logName);
